@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, onMounted, onBeforeUnmount, ref, watch } from 'vue';
-import PriceChart from 'components/PriceChart.vue';
+// import PriceChart from 'components/PriceChart.vue';
 import TransactionsTable from 'components/TransactionsTable.vue';
 import WorldMap from 'components/WorldMap.vue';
 import MapData from 'components/MapData.vue';
@@ -16,7 +16,7 @@ enum MapReveal {
 export default defineComponent({
     name: 'PageNetwork',
     components: {
-        PriceChart,
+        // PriceChart,
         TransactionsTable,
         WorldMap,
         MapData,
