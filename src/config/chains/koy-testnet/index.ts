@@ -164,7 +164,7 @@ export default class KoyTestnet extends BaseChain {
         return [
             { label: 'LEGAL', url: 'https://telos.net/legal' },
             { label: 'PRIVACY', url: 'https://telos.net/privacy-policy' },
-            { label: 'REPOSITORY', url: 'https://github.com/telosnetwork/open-block-explorer' },
+            { label: 'REPOSITORY', url: 'https://github.com/KOY-Network/koy-block-explorer' },
         ];
     }
 }
