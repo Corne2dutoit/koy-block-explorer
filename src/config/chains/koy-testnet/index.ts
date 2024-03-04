@@ -38,11 +38,13 @@ const TOKEN = {
 } as Token;
 
 // const HYPERION_ENDPOINT = 'https://testnet.telos.net';
-const HYPERION_ENDPOINT = 'https://api.koy-stagenet.telos.africa';
+// const HYPERION_ENDPOINT = 'https://api.koy-stagenet.telos.africa';
+const HYPERION_ENDPOINT = 'https://api.testnet.koynetwork.io/';
 // const HYPERION_ENDPOINT = 'https://eosauthority.com/?network=localtest&endpoint=https:%2F%2Fapi.koy-stagenet.telos.africa&token_symbol=KOYN';
 const RPC_ENDPOINT = {
     protocol: 'https',
-    host: 'api.koy-stagenet.telos.africa',
+    // host: 'api.koy-stagenet.telos.africa',
+    host: 'api.testnet.koynetwork.io',
     // host: 'testnet.telos.net',
     port: 443,
 };
@@ -52,7 +54,8 @@ const RPC_ENDPOINT = {
 //     port: 443,
 // };
 // const API_ENDPOINT = 'https://api.telos.net/v1';
-const API_ENDPOINT = 'https://api.koy-stagenet.telos.africa';
+// const API_ENDPOINT = 'https://api.koy-stagenet.telos.africa';
+const API_ENDPOINT = 'https://api.testnet.koynetwork.io/';
 // api.koy-stagenet.telos.africa
 const S3_PRODUCER_BUCKET = 'https://telos-producer-validation.s3.amazonaws.com';
 const DISPLAY_MAP = false;
