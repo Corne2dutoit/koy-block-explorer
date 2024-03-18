@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Token, GetTableRowsParams, RexbalRows, RexPoolRows } from 'src/types';
+import { Token, GetTableRowsParams, RexbalRows, RexPoolRows, GenericTable } from 'src/types';
 import { defineComponent, computed, ref, onMounted, watch } from 'vue';
 import { useAntelopeStore } from 'src/store/antelope.store';
 import PercentCircle from 'src/components/PercentCircle.vue';
@@ -17,6 +17,19 @@ import { API, UInt64 } from '@greymass/eosio';
 import { formatCurrency } from 'src/utils/string-utils';
 import ConfigManager from 'src/config/ConfigManager';
 import { isSystemAccount } from 'src/utils/systemAccount';
+
+interface Balance {
+    version: number;
+    owner: string;
+    balance_locked: string;
+    balance_unlocked: string;
+    lock_balances: {
+        vesting_start: string;
+        vesting_duration: number;
+        total_locked: string;
+        total_unlocked: string;
+    }
+}
 
 const chain = getChain();
 export default defineComponent({
@@ -58,6 +71,10 @@ export default defineComponent({
         const delegatedToOthers = computed(
             (): number => store.resources.getDelegatedToOthersAggregated(),
         );
+
+        const unlockStaked = ref<string>('-');
+        const lockedStaked = ref<string>('-');
+
         const rexStaked = ref<number>(0);
         const rexProfits = ref<number>(0);
         const rexDeposits = ref<number>(0);
@@ -154,6 +171,29 @@ export default defineComponent({
                 $q.notify('REX information not available!');
             }
         };
+
+        async function getStakedBalances() {
+            const params = {
+                code: 'eosio',
+                limit: '1',
+                lower_bound: props.account as unknown as TableIndexType,
+                scope: 'eosio',
+                table: 'koybalance',
+                json: true,
+                key_type: 'i64',
+                upper_bound: props.account as unknown as TableIndexType,
+            } as GetTableRowsParams;
+
+            let data = ((await api.getTableRows(params)) as GenericTable).rows as Balance[];
+
+            if (data.length > 0) {
+                const unlocked_staked = data[0].balance_unlocked;
+                const locked_staked = data[0].balance_locked;
+
+                unlockStaked.value = unlocked_staked;
+                lockedStaked.value = locked_staked;
+            }
+        }
 
         const determineUnit = (size: number) => {
             if (size > GIGA_UNIT.value) {
@@ -391,6 +431,7 @@ export default defineComponent({
         };
 
         onMounted(async () => {
+            await getStakedBalances();
             usdPrice.value = await chain.getUsdPrice();
             await loadAccountData();
             await store.dispatch('account/updateRexData', {
@@ -398,6 +439,7 @@ export default defineComponent({
             });
             loadSystemToken();
             void store.dispatch('chain/updateRamPrice');
+
         });
 
         watch(
@@ -440,6 +482,8 @@ export default defineComponent({
             totalValueString,
             rex,
             rexStaked,
+            unlockStaked,
+            lockedStaked,
             rexDeposits,
             none,
             radius,
@@ -599,32 +643,12 @@ export default defineComponent({
                         <td class="text-right">{{ formatAsset(liquidNative) }}</td>
                     </tr>
                     <tr v-if="!accountPageSettings.hideRexInfo">
-                        <td class="text-left">REX staked (includes savings)</td>
-                        <td class="text-right">{{ formatAsset(rexStaked) }}</td>
+                        <td class="text-left">STAKED (Unlocked)</td>
+                        <td class="text-right">{{ unlockStaked }}</td>
                     </tr>
                     <tr v-if="!accountPageSettings.hideRexInfo">
-                        <td class="text-left">REX liquid deposits</td>
-                        <td class="text-right">{{ formatAsset(rexDeposits) }}</td>
-                    </tr>
-                    <tr v-if="!accountPageSettings.hideCpuInfo">
-                        <td class="text-left">STAKED for CPU</td>
-                        <td class="text-right">{{ formatAsset(stakedCPU) }}</td>
-                    </tr>
-                    <tr v-if="!accountPageSettings.hideNetInfo">
-                        <td class="text-left">STAKED for NET</td>
-                        <td class="text-right">{{ formatAsset(stakedNET) }}</td>
-                    </tr>
-                    <tr v-if="!accountPageSettings.hideRefundingInfo">
-                        <td class="text-left">REFUNDING from staking</td>
-                        <td class="text-right">{{ formatAsset(stakedRefund) }}</td>
-                    </tr>
-                    <tr v-if="!accountPageSettings.hideDelegatedInfo">
-                        <td class="text-left">DELEGATED to others</td>
-                        <td class="text-right">{{ formatAsset(delegatedToOthers) }}</td>
-                    </tr>
-                    <tr v-if="!accountPageSettings.hideDelegatedInfo">
-                        <td class="text-left">DELEGATED by others</td>
-                        <td class="text-right">{{ formatAsset(delegatedByOthers) }}</td>
+                        <td class="text-left">STAKED (Locked)</td>
+                        <td class="text-right">{{ lockedStaked }}</td>
                     </tr>
                 </tbody>
             </thead>
