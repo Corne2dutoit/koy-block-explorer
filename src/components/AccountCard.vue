@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Token, GetTableRowsParams, RexbalRows, RexPoolRows, GenericTable } from 'src/types';
+import { Token, GetTableRowsParams, GenericTable } from 'src/types';
 import { defineComponent, computed, ref, onMounted, watch } from 'vue';
 import { useAntelopeStore } from 'src/store/antelope.store';
 import PercentCircle from 'src/components/PercentCircle.vue';
@@ -72,8 +72,8 @@ export default defineComponent({
             (): number => store.resources.getDelegatedToOthersAggregated(),
         );
 
-        const unlockStaked = ref<string>('-');
-        const lockedStaked = ref<string>('-');
+        const unlockStaked = ref<number>(0);
+        const lockedStaked = ref<number>(0);
 
         const rexStaked = ref<number>(0);
         const rexProfits = ref<number>(0);
@@ -108,7 +108,7 @@ export default defineComponent({
             (accountData.value?.refund_request?.net_amount.value ?? 0),
         );
 
-        const staked = computed((): number => stakedRefund.value + stakedNET.value + stakedCPU.value);
+        // const staked = computed((): number => stakedRefund.value + stakedNET.value + stakedCPU.value);
 
         const token = computed((): Token => store.state.chain.token);
 
@@ -150,7 +150,7 @@ export default defineComponent({
                 isLoading.value = true;
                 accountData.value = await api.getAccount(props.account);
                 await loadAccountCreatorInfo();
-                await loadBalances();
+                // await loadBalances();
                 loadResources();
                 setTotalBalance();
                 await updateTokenBalances();
@@ -162,15 +162,15 @@ export default defineComponent({
             }
         };
 
-        const loadBalances = async () => {
-            try {
-                const total  = await getRexBalance();
-                rexDeposits.value = await getRexFund();
-                rexStaked.value = total;
-            } catch (e) {
-                $q.notify('REX information not available!');
-            }
-        };
+        // const loadBalances = async () => {
+        //     try {
+        //         const total  = await getRexBalance();
+        //         rexDeposits.value = await getRexFund();
+        //         rexStaked.value = total;
+        //     } catch (e) {
+        //         $q.notify('REX information not available!');
+        //     }
+        // };
 
         async function getStakedBalances() {
             const params = {
@@ -187,11 +187,14 @@ export default defineComponent({
             let data = ((await api.getTableRows(params)) as GenericTable).rows as Balance[];
 
             if (data.length > 0) {
-                const unlocked_staked = data[0].balance_unlocked;
-                const locked_staked = data[0].balance_locked;
+                const unlocked_staked = Number(data[0].balance_unlocked.split(' ')[0]);
+                const locked_staked = Number(data[0].balance_locked.split(' ')[0]);
 
-                unlockStaked.value = unlocked_staked;
-                lockedStaked.value = locked_staked;
+                const converted_unlocked_staked = (unlocked_staked / 10000);
+                const converted_locked_staked = (locked_staked / 10000);
+
+                unlockStaked.value = converted_unlocked_staked;
+                lockedStaked.value = converted_locked_staked;
             }
         }
 
@@ -273,7 +276,7 @@ export default defineComponent({
         };
 
         const setTotalBalance = () => {
-            totalTokens.value = liquidNative.value + rex.value + staked.value + delegatedToOthers.value;
+            totalTokens.value = liquidNative.value + unlockStaked.value + lockedStaked.value;
             isLoading.value = false;
         };
 
@@ -301,69 +304,69 @@ export default defineComponent({
         const updateResources = (payload: {account:string, force: boolean}) =>
             store.resources.updateResources(payload);
 
-        const getRexFund = async () => {
-            const paramsrexfund = {
-                code: 'eosio',
-                limit: '1',
-                lower_bound: props.account as unknown as TableIndexType,
-                scope: 'eosio',
-                table: 'rexfund',
-                reverse: false,
-                upper_bound: props.account as unknown as TableIndexType,
-            } as GetTableRowsParams;
-            const rexfund = (
-                (await api.getTableRows(paramsrexfund)) as {
-                    rows: {
-                        owner: string;
-                        balance: string;
-                    }[];
-                }
-            ).rows[0];
+        // const getRexFund = async () => {
+        //     const paramsrexfund = {
+        //         code: 'eosio',
+        //         limit: '1',
+        //         lower_bound: props.account as unknown as TableIndexType,
+        //         scope: 'eosio',
+        //         table: 'rexfund',
+        //         reverse: false,
+        //         upper_bound: props.account as unknown as TableIndexType,
+        //     } as GetTableRowsParams;
+        //     const rexfund = (
+        //         (await api.getTableRows(paramsrexfund)) as {
+        //             rows: {
+        //                 owner: string;
+        //                 balance: string;
+        //             }[];
+        //         }
+        //     ).rows[0];
 
-            const rexFundBalance =
-                rexfund && rexfund.balance
-                    ? Number(rexfund.balance.split(' ')[0])
-                    : 0.0;
-            return rexFundBalance;
-        };
+        //     const rexFundBalance =
+        //         rexfund && rexfund.balance
+        //             ? Number(rexfund.balance.split(' ')[0])
+        //             : 0.0;
+        //     return rexFundBalance;
+        // };
 
-        const getRexBalance = async () => {
-            const paramsrexbal = {
-                code: 'eosio',
-                limit: '2',
-                lower_bound: props.account as unknown as TableIndexType,
-                scope: 'eosio',
-                table: 'rexbal',
-                reverse: false,
-                upper_bound: props.account as unknown as TableIndexType,
-            } as GetTableRowsParams;
+        // const getRexBalance = async () => {
+        //     const paramsrexbal = {
+        //         code: 'eosio',
+        //         limit: '2',
+        //         lower_bound: props.account as unknown as TableIndexType,
+        //         scope: 'eosio',
+        //         table: 'rexbal',
+        //         reverse: false,
+        //         upper_bound: props.account as unknown as TableIndexType,
+        //     } as GetTableRowsParams;
 
-            const rexBal = ((await api.getTableRows(paramsrexbal)) as RexbalRows)
-                .rows[0];
+        //     const rexBal = ((await api.getTableRows(paramsrexbal)) as RexbalRows)
+        //         .rows[0];
 
-            const totalRexBalance =
-                rexBal?.rex_balance
-                    ? Number(rexBal.rex_balance.split(' ')[0])
-                    : 0;
+        //     const totalRexBalance =
+        //         rexBal?.rex_balance
+        //             ? Number(rexBal.rex_balance.split(' ')[0])
+        //             : 0;
 
-            const paramsrexpool = {
-                code: 'eosio',
-                scope: 'eosio',
-                table: 'rexpool',
-                json: true,
-                reverse: false,
-            } as GetTableRowsParams;
+        //     const paramsrexpool = {
+        //         code: 'eosio',
+        //         scope: 'eosio',
+        //         table: 'rexpool',
+        //         json: true,
+        //         reverse: false,
+        //     } as GetTableRowsParams;
 
-            const rexpool = ((await api.getTableRows(paramsrexpool)) as RexPoolRows)
-                .rows[0];
+        //     const rexpool = ((await api.getTableRows(paramsrexpool)) as RexPoolRows)
+        //         .rows[0];
 
-            const totalRex = Number(rexpool.total_rex.split(' ')[0]);
-            const totalLendable = Number(rexpool.total_lendable.split(' ')[0]);
-            const tlosRexRatio = totalRex > 0 ? totalLendable / totalRex : 1;
+        //     const totalRex = Number(rexpool.total_rex.split(' ')[0]);
+        //     const totalLendable = Number(rexpool.total_lendable.split(' ')[0]);
+        //     const tlosRexRatio = totalRex > 0 ? totalLendable / totalRex : 1;
 
-            const total = totalRex > 0 ? tlosRexRatio * totalRexBalance : 0.0;
-            return total;
-        };
+        //     const total = totalRex > 0 ? tlosRexRatio * totalRexBalance : 0.0;
+        //     return total;
+        // };
 
         const fixDec = (val: number): number => Math.abs(parseFloat(val.toFixed(3)));
 
@@ -644,11 +647,11 @@ export default defineComponent({
                     </tr>
                     <tr v-if="!accountPageSettings.hideRexInfo">
                         <td class="text-left">STAKED (Unlocked)</td>
-                        <td class="text-right">{{ unlockStaked }}</td>
+                        <td class="text-right">{{ formatAsset(unlockStaked) }}</td>
                     </tr>
                     <tr v-if="!accountPageSettings.hideRexInfo">
                         <td class="text-left">STAKED (Locked)</td>
-                        <td class="text-right">{{ lockedStaked }}</td>
+                        <td class="text-right">{{ formatAsset(lockedStaked) }}</td>
                     </tr>
                 </tbody>
             </thead>
