@@ -24,7 +24,7 @@ export default defineComponent({
 <template>
 <div class="row home-container">
     <div class="col-12 col-sm-8 q-pa-md header-support home-banner">
-        <img class="antelope-logo" src="icons/antelope-logo.png">
+        <img class="antelope-logo" src="chains/koy-testnet/logo_lg.png">
         <h2>KOY Block Explorer</h2>
     </div>
     <div class="col-12 col-sm-4">
