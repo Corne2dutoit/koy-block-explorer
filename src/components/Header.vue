@@ -140,8 +140,8 @@ export default defineComponent({
         margin-right: 4px
 
 .logo
-  width: 104px
-  height:40px
+  width: 150px
+  height:80px
   object-fit: contain
 
 .logo-token
